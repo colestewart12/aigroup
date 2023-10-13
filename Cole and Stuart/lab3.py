@@ -135,6 +135,8 @@ def main(args):
     else:
         showHelper()
 
+def analysis(data):
+    pass
 
 def showHelper():
     """
