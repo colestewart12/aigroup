@@ -80,12 +80,14 @@ def splitDataRandom(data, trainData, testData, ratio):
                 test.write(line)
 
 
-def main():
+def main(args):
     """
     This function is the main function that will be executed when the script is run.
     """
-    mode = "N"
-    ratio = 0.7
+    #Extract arguments or use defaults
+    mode = args.mode
+    ratio = args.r
+
     print("mode is " + mode + " ratio is " + str(ratio))
     if mode == "N":
         splitData("data.csv", "trainData.txt", "testData.txt", ratio)
@@ -107,6 +109,27 @@ def showHelper():
 
     sys.exit(0)
 
+def valid_r(value):
+    if value in ['']:
+        print("No --r argument provided, defaulting to 0.7")
+        return 0.7
+    try:
+        value_float = float(value)
+        if 0 < value_float < 1:
+            return value_float
+        else:
+            raise argparse.ArgumentTypeError(f"Invalid value {value}. 'r' must be between 0 and 1 (exclusive).")
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"Invalid value {value}. 'r' must be a decimal number between 0 and 1 (exclusive).")
+
+def valid_mode(value):
+    if value in ['']:
+        print("No --mode argument provided, defaulting to N, splitData")
+        return 'N'
+    if value in ['N', 'R']:
+        return value
+    else:
+        raise argparse.ArgumentTypeError(f"Invalid value {value}. 'mode' must be either 'N' or 'R'.")
 
 if __name__ == "__main__":
     # ------------------------arguments------------------------------#
@@ -114,7 +137,12 @@ if __name__ == "__main__":
     # ---------------------------------------------------------------#
     parser = argparse.ArgumentParser()
     parser._optionals.title = "Arguments"
-    parser.add_argument('--mode', dest='mode',
+    parser.add_argument('--mode', dest='mode', type=valid_mode,
                         default='',  # default empty!
                         help='Mode: R for random splitting, and N for the normal splitting')
-    main()
+    parser.add_argument('--r', dest='r', type=valid_r,
+                        default='',  # default empty!
+                        help='Ratio: takes a numeric value r that is used to split the dataset that follows this rule: 0 < r < 1')
+    
+    args = parser.parse_args()
+    main(args)
