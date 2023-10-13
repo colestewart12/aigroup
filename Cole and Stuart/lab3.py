@@ -79,6 +79,39 @@ def splitDataRandom(data, trainData, testData, ratio):
             else:
                 test.write(line)
 
+def splitThree(data, trainData, testData, validationData, ratios):
+    """
+    Input: data Output: trainData, used for training your machine learning model testData, used to evaluate the
+    performance of your machine learning model ratios,validationData, used for validating the results, ratios decide the percentage of trainingData:testData:validationData.
+    Example: You have a training data with 10000 data record, ratio is 0.7, so you will split the whole dataset and
+    store 7000 of them in trainData, and 3000 in testData. Instruction: Almost same as splitData, the only difference
+    is this function will randomly shuffle the input data, so you will randomly select data and store it in the
+    trainData
+    """
+    ratio1, ratio2, ratio3 = ratios
+
+    with open(data, "r") as file:
+        Lines = file.readlines()
+        total_lines = len(Lines) - 1
+
+        header_line = Lines[0]
+
+        train_boundary = int(total_lines * ratio1)
+        test_boundary = train_boundary + int(total_lines * ratio2)
+        
+        train_lines = Lines[1:train_boundary+1]
+        test_lines = Lines[train_boundary+1:test_boundary+1]
+        validation_lines = Lines[test_boundary+1:]
+
+        with open(trainData, "w") as train:
+            train.write(header_line)
+            train.writelines(train_lines)
+        with open(testData, "w") as test:
+            test.write(header_line)
+            test.writelines(test_lines)
+        with open(validationData, "w") as validation:
+            validation.write(header_line)
+            validation.writelines(validation_lines)
 
 def main(args):
     """
@@ -87,11 +120,17 @@ def main(args):
     #Extract arguments or use defaults
     mode = args.mode
     ratio = args.r
+    ratios = args.ratios
+    ratios = valid_ratios(ratios)
 
-    print("mode is " + mode + " ratio is " + str(ratio))
-    if mode == "N":
+    if mode == "V":
+        print("mode is " + mode + " ratios are " + str(ratios))
+        splitThree("data.csv", "trainData.txt", "testData.txt", "validationData.txt", ratios)
+    elif mode == "N":
+        print("mode is " + mode + " ratio is " + str(ratio))
         splitData("data.csv", "trainData.txt", "testData.txt", ratio)
     elif mode == "R":
+        print("mode is " + mode + " ratio is " + str(ratio))
         splitDataRandom("data.csv", "randomTrainData.txt", "randomTestData.txt", ratio)
     else:
         showHelper()
@@ -110,8 +149,10 @@ def showHelper():
     sys.exit(0)
 
 def valid_r(value):
+    """
+    Checks that the command line argument value is a numeric and is between 0 and 1, if none provided then provides a default of 0.7
+    """
     if value in ['']:
-        print("No --r argument provided, defaulting to 0.7")
         return 0.7
     try:
         value_float = float(value)
@@ -123,14 +164,22 @@ def valid_r(value):
         raise argparse.ArgumentTypeError(f"Invalid value {value}. 'r' must be a decimal number between 0 and 1 (exclusive).")
 
 def valid_mode(value):
+    """
+    Checks that the command line argument values falls into a list (N, R, or V), if none provided then provides a default of N
+    """
     if value in ['']:
-        print("No --mode argument provided, defaulting to N, splitData")
         return 'N'
-    if value in ['N', 'R']:
+    if value in ['N', 'R', 'V']:
         return value
     else:
         raise argparse.ArgumentTypeError(f"Invalid value {value}. 'mode' must be either 'N' or 'R'.")
 
+def valid_ratios(ratios):
+    if not 0.99 <= sum(ratios) <= 1.01: 
+        raise argparse.ArgumentTypeError("The sum of the ratios must be 1.")
+
+    return ratios
+    
 if __name__ == "__main__":
     # ------------------------arguments------------------------------#
     # Shows help to the users                                        #
@@ -139,10 +188,12 @@ if __name__ == "__main__":
     parser._optionals.title = "Arguments"
     parser.add_argument('--mode', dest='mode', type=valid_mode,
                         default='',  # default empty!
-                        help='Mode: R for random splitting, and N for the normal splitting')
+                        help='Mode: R for random splitting, N for the normal splitting, and V for a three datasets including Validation')
     parser.add_argument('--r', dest='r', type=valid_r,
                         default='',  # default empty!
                         help='Ratio: takes a numeric value r that is used to split the dataset that follows this rule: 0 < r < 1')
+    parser.add_argument('--ratios', dest='ratios', type=float, nargs=3, default=[0.3, 0.3, 0.4],
+                        help='Ratios: takes three numeric values that are used to split the training, testing, and validation datasets in the order training:testing:validation with the ratios needing to add to 1')
     
     args = parser.parse_args()
     main(args)
