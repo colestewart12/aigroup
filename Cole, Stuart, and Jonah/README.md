@@ -29,3 +29,5 @@ the ratio defaults to ```0.7```
 
 # Extra work 
 Added another mode ```V``` which splits the data into test, training, and validation data. It works in combination with a new command line argument called ```--ratios``` which is the ratio of the data in the form of test:training:validation. Specific Documentation above in How to Run Your Code. 
+
+The fourth arugment titled, ```--analysis```, computes the average, min, and max duration of games for a given team team in 2016. The method can be ran in mode ```A```.

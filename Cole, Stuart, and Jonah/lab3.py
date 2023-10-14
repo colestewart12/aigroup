@@ -19,6 +19,7 @@ import sys
 import argparse
 import math
 import random
+import pandas as pd
 
 
 def splitData(data, trainData, testData, ratio):
@@ -122,6 +123,8 @@ def main(args):
     ratio = args.r
     ratios = args.ratios
     ratios = valid_ratios(ratios)
+    homeTeam = args.homeTeam
+    homeTeam = valid_team(homeTeam)
 
     if mode == "V":
         print("mode is " + mode + " ratios are " + str(ratios))
@@ -132,11 +135,27 @@ def main(args):
     elif mode == "R":
         print("mode is " + mode + " ratio is " + str(ratio))
         splitDataRandom("data.csv", "randomTrainData.txt", "randomTestData.txt", ratio)
+    elif mode == "A":
+        print("mode is " + mode + ": Game duration statistics for " + homeTeam + " in 2016.")
+        analysis(homeTeam)
     else:
         showHelper()
 
-def analysis(data):
-    pass
+def analysis(homeTeam):
+
+    df = pd.read_csv('data.csv')
+    mask = df['homeTeamName'] == str(homeTeam)
+    filter = df[mask]
+
+    average = filter['durationMinutes'].mean()
+    minimum = filter['durationMinutes'].min()
+    maximum = filter['durationMinutes'].max()
+
+    print(f"Year: 2016")
+    print(f"Average Duration in Minutes: {average}")
+    print(f"Minimum Duration in Minutes: {minimum}")
+    print(f"Maximum Duration in Minutes: {maximum}")
+    
 
 def showHelper():
     """
@@ -167,20 +186,30 @@ def valid_r(value):
 
 def valid_mode(value):
     """
-    Checks that the command line argument values falls into a list (N, R, or V), if none provided then provides a default of N
+    Checks that the command line argument values falls into a list (N, R, V, or A), if none provided then provides a default of N
     """
     if value in ['']:
         return 'N'
-    if value in ['N', 'R', 'V']:
+    if value in ['N', 'R', 'V', 'A']:
         return value
     else:
-        raise argparse.ArgumentTypeError(f"Invalid value {value}. 'mode' must be either 'N' or 'R'.")
+        raise argparse.ArgumentTypeError(f"Invalid value {value}. 'mode' must be either 'N', 'R', 'V', or 'A'.")
 
 def valid_ratios(ratios):
     if not 0.99 <= sum(ratios) <= 1.01: 
         raise argparse.ArgumentTypeError("The sum of the ratios must be 1.")
 
     return ratios
+
+def valid_team(homeTeam):
+
+    df = pd.read_csv("data.csv")
+    mask = list(df['homeTeamName'].unique())
+    
+    if homeTeam in mask:
+        return homeTeam
+    else:
+        raise argparse.ArgumentTypeError(f"Invalid team: {homeTeam}.")
     
 if __name__ == "__main__":
     # ------------------------arguments------------------------------#
@@ -196,6 +225,8 @@ if __name__ == "__main__":
                         help='Ratio: takes a numeric value r that is used to split the dataset that follows this rule: 0 < r < 1')
     parser.add_argument('--ratios', dest='ratios', type=float, nargs=3, default=[0.3, 0.3, 0.4],
                         help='Ratios: takes three numeric values that are used to split the training, testing, and validation datasets in the order training:testing:validation with the ratios needing to add to 1')
+    parser.add_argument('--team', dest='homeTeam', type=str, default="Indians",
+                        help='Enter team name to be passed into args for analysis method.')
     
     args = parser.parse_args()
     main(args)
